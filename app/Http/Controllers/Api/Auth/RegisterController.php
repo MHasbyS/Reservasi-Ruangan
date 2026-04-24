@@ -26,6 +26,7 @@ class RegisterController extends Controller
 
         return response()->json([
             'message' => 'Registrasi Berhasil',
+            // 'data' => $user,
             'data' => new RegisterResource(['user' => $user]),
         ]);
     }

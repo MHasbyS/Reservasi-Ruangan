@@ -29,7 +29,7 @@ class RoomService
         }
         $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
 
-        $perPage = $filters['per_page'] ?? 99;
+        $perPage = $filters['per_page'] ?? 5;
 
         if ($perPage === 'all') {
             return $query->get();

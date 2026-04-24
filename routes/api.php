@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Auth\LoginController;
 use App\Http\Controllers\Api\Auth\RegisterController;
 use App\Http\Controllers\Api\Auth\LogoutController;
 use App\Http\Controllers\Api\Auth\ProfileController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FixedScheduleController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RoomController;
@@ -17,13 +18,14 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:api');
 
 Route::get('users', [UserController::class, 'index']);
-
+Route::get('dashboard',[DashboardController::class,'index']);
 Route::get('rooms', [RoomController::class, 'index']);
 Route::get('fixed-schedules', [FixedScheduleController::class, 'index']);
 Route::put('rooms/{id}', [RoomController::class, 'update']);
     Route::get('reservations', [ReservationController::class, 'index'])->name('index');
 
 
+    Route::get('/reservations/export', [ReservationController::class, 'exportExcel']);
 
 Route::post('/auth/login', [LoginController::class, 'login']);
 Route::post('/auth/register', [RegisterController::class, 'register']);
@@ -43,7 +45,6 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/admin/reservation-log', [ReservationLogController::class, 'index']);
 
     Route::middleware('role:admin')->group(function () {
-        Route::get('/reservations/export', [ReservationController::class, 'exportExcel']);
     });
     Route::middleware('role_or_permission:admin|manage.users')->group(function () {
         Route::post('users', [UserController::class, 'store']);

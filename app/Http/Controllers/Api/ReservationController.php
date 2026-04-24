@@ -85,7 +85,7 @@ class ReservationController extends Controller
                     'page' => $reservations->currentPage() . '/' . $reservations->lastPage(),
                     'total' => $reservations->total(),
                 ],
-                'data' => $reservations->isEmpty() ? [null] : ReservationResource::collection($reservations)
+                'data' => ReservationResource::collection($reservations)->resolve(),
             ], 200);
         } catch (\Exception $e) {
             Log::error('Gagal mengambil data reservasi: ' . $e->getMessage());

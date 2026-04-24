@@ -14,22 +14,25 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        // pastikan role admin sudah ada di Spatie
-        Role::firstOrCreate([
-            'name' => 'admin',
-        ]);
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
 
-        $admin = User::firstOrCreate(
-            ['email' => 'admin1@example.com'], // unik berdasarkan email
+        // Buat 1 akun admin untuk keperluan development
+        $email = 'admin@example.com';
+
+        $user = User::firstOrCreate(
+            ['email' => $email], // cek berdasarkan email
             [
-                'name' => 'Admin',
-                'password' => Hash::make('password123'),
-                'role' => 'admin', // simpan ke kolom users.role
-            ],
-
+                'name' => 'Administrator',
+                'password' => Hash::make('password123'), // password default
+                'role' => 'admin', // simpan juga di kolom users.role
+            ]
         );
 
-        // assign role ke Spatie
-        $admin->assignRole('admin');
+        // Assign role Spatie jika belum ada
+        if (! $user->hasRole('admin')) {
+            $user->assignRole($adminRole);
+        }
+
+        $this->command->info('✅ Akun admin berhasil dibuat (email: admin@example.com, password: password123)');
     }
 }

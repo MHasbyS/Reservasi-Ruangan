@@ -10,12 +10,7 @@ class ReservationService
     public function filterReservations(array $filters,)
     {
         $query = Reservations::with(['user', 'room']);
-        $user = auth()->guard()->user();
-
-        if (!$user->hasRole('admin')) {
-            $query->where('user_id', $user->id);
-        }
-
+        
         if (!empty($filters['date'])) {
             $query->where('date', $filters['date']);
         }
@@ -57,3 +52,4 @@ class ReservationService
         return $query->paginate((int) $perPage);
     }
 }
+

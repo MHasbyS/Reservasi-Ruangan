@@ -40,6 +40,7 @@ class RoleAndPermissionSeeder extends Seeder
 
         //permission to role
         $admin->givePermissionTo([
+            'manage users',
             'manage rooms',
             'manage schedule',
             'approve reservation',
