@@ -7,6 +7,9 @@ use App\Models\FixedSchedule;
 use App\Models\Reservations;
 use App\Models\Rooms;
 use App\Http\Requests\StoreReservationRequest;
+use App\Http\Requests\GetReservationRequest;
+use App\Helpers\ApiResponse;
+use App\Http\Resources\PaginatedResource;
 use App\Http\Resources\ReservationApprovalResource;
 use App\Http\Resources\ReservationResource;
 use Illuminate\Http\Request;
@@ -52,48 +55,14 @@ class ReservationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(GetReservationRequest $request)
     {
-        try {
-            $validated = $request->validate([
-                'date' => 'nullable|date',
-                'day_of_week' => 'nullable|string',
-                'user_id' => 'nullable|int|min:1',
-                'room_id' => 'nullable|int|min:1',
-                'status' => 'nullable|string|in:active,inactive',
-                'user_name' => 'nullable|string',
-                'room_name' => 'nullable|string',
-                'sort_order' => 'nullable|string|in:asc,desc',
-                'per_page' => [
-                    'nullable',
-                    function ($attribute, $value, $fail) {
-                        if ($value === 'all') return; // valid
+        $reservations = Reservations::search($request->search)->latest()->paginate($request->limit ?? 10);
 
-                        if (!ctype_digit(strval($value)) || (int)$value < 1) {
-                            $fail("The $attribute field must be a positive integer or 'all'.");
-                        }
-                    },
-                ],
-                'page' => 'nullable|int|min:1',
-            ]);
-            $reservations = $this->reservationService->filterReservations($validated);
-
-            return response()->json([
-                'success' => true,
-                'pagination' => [
-                    'per_page' => $reservations->perPage(),
-                    'page' => $reservations->currentPage() . '/' . $reservations->lastPage(),
-                    'total' => $reservations->total(),
-                ],
-                'data' => ReservationResource::collection($reservations)->resolve(),
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error('Gagal mengambil data reservasi: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat mengambil data reservasi.',
-                'error'   => $e->getMessage()
-            ], 500);
-        }
+        return ApiResponse::success(
+            new PaginatedResource($reservations, ReservationResource::class),
+            "List Reservasi"
+        );
     }
 
 

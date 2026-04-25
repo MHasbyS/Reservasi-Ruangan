@@ -59,6 +59,27 @@ class Reservations extends Model
         return $this->belongsTo(Rooms::class, 'room_id');
     }
 
+    public function scopeSearch($query, $search)
+    {
+        if ($search) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('date', 'like', "%{$search}%")
+                    ->orWhere('day_of_week', 'like', "%{$search}%")
+                    ->orWhere('start_time', 'like', "%{$search}%")
+                    ->orWhere('end_time', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('reason', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('room', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+        return $query;
+    }
+
     public function getDayLabelAttribute()
     {
         $days = [
