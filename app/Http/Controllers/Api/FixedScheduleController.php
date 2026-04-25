@@ -11,6 +11,8 @@ use App\Models\Rooms;
 use App\Services\FixedScheduleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use App\Helpers\ApiResponse;
+use App\Http\Resources\PaginatedResource;
 
 class FixedScheduleController extends Controller
 {
@@ -22,60 +24,11 @@ class FixedScheduleController extends Controller
     }
     public function index(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'room_id' => 'nullable|integer|exists:rooms,id',
-                'day_of_week' => 'nullable|string',
-                'start_time' => 'nullable|date_format:H:i',
-                'end_time' => 'nullable|date_format:H:i',
-                'sort_by' => 'nullable|string|in:created_at,day_of_week,start_time,end_time',
-                'sort_order' => 'nullable|string|in:asc,desc',
-                'per_page' => [
-                    'nullable',
-                    function ($attribute, $value, $fail) {
-                        if ($value === 'all') return; // valid
-                        if (!ctype_digit(strval($value)) || (int)$value < 1) {
-                            $fail("The $attribute field must be a positive integer or 'all'.");
-                        }
-                    },
-                ],
-                'page' => 'nullable|integer|min:1',
-            ]);
-
-            $fixedSchedules = $this->fixedScheduleService->filterFixedSchedules($validated);
-
-            // Jika per_page = all
-            if (($validated['per_page'] ?? null) === 'all') {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Berhasil memanggil semua data',
-                    'pagination' => [
-                        'per_page' => 'all',
-                        'page' => '1/1',
-                        'total' => $fixedSchedules->count(),
-                    ],
-                    'data' => FixedScheduleResource::collection($fixedSchedules),
-                ], 200);
-            }
-
-            // Jika pagination biasa
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil memanggil data',
-                'pagination' => [
-                    'per_page' => $fixedSchedules->perPage(),
-                    'page' => $fixedSchedules->currentPage() . '/' . $fixedSchedules->lastPage(),
-                    'total' => $fixedSchedules->total(),
-                ],
-                'data' => $fixedSchedules->isEmpty() ? [null] : FixedScheduleResource::collection($fixedSchedules),
-            ], 200);
-        } catch (\Throwable $th) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat mengambil data.',
-                'error' => $th->getMessage(),
-            ], 500);
-        }
+        $fixedSchedules = FixedSchedule::search($request->search)->orderBy('id', 'desc')->paginate($request->limit);
+        return ApiResponse::success(
+            new PaginatedResource($fixedSchedules, FixedScheduleResource::class),
+            'List Fixed Schedules'
+        );
     }
 
 
