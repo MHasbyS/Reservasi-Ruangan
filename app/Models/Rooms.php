@@ -67,4 +67,10 @@ class Rooms extends Model
                 return "Room has been {$eventName}";
             });
     }
+    public function scopeSearch($query, $search)
+    {
+        return $query->when($search, function ($query, $search){
+            $query->where('name', 'like', "%{$search}%");
+        });
+    }
 }

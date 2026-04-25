@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Helpers\ApiResponse;
+use App\Http\Requests\GetRoomRequest;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreRoomRequest;
 use App\Http\Requests\UpdateRoomRequest;
+use App\Http\Resources\PaginatedResource;
 use App\Http\Resources\RoomResource;
 use App\Models\Rooms;
 use App\Services\RoomService;
@@ -21,62 +24,15 @@ class RoomController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(GetRoomRequest $request)
     {
-        try {
-            // $rooms = Rooms::all();
-            $validated = $request->validate([
-                'name' => 'nullable|string',
-                'capacity' => 'nullable|int|min:1',
-                'status' => 'nullable|string',
-                'sort_by' => 'nullable|string|in:created_at,status,name,capacity',
-                'sort_order' => 'nullable|string|in:asc,desc',
-                'per_page' => [
-                    'nullable',
-                    function ($attribute, $value, $fail) {
-                        if ($value === 'all') return; // valid
+        $rooms = Rooms::search($request->search)->latest()->paginate($request->limit ?? 10);
 
-                        if (!ctype_digit(strval($value)) || (int)$value < 1) {
-                            $fail("The $attribute field must be a positive integer or 'all'.");
-                        }
-                    },
-                ],
-                'page' => 'nullable|int|min:1',
-            ]);
-
-            $rooms = $this->roomService->filterRooms($validated);
-
-            // Jika user menggunakan per_page = all
-            if (($validated['per_page'] ?? null) === 'all') {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Berhasil memanggil semua data',
-                    'pagination' => [
-                        'per_page' => 'all',
-                        'page' => '1/1',
-                        'total' => $rooms->count(),
-                    ],
-                    'data' => RoomResource::collection($rooms),
-                ], 200);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Data ruangan berhasil diambil',
-                'pagination' => [
-                    'per_page' => $rooms->perPage(),
-                    'page' => $rooms->currentPage() . '/' . $rooms->lastPage(),
-                    'total' => $rooms->total(),
-                ],
-                'data' => $rooms->isEmpty() ? [null] : RoomResource::collection($rooms)
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data ruangan',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        return ApiResponse::success(
+            new PaginatedResource($rooms, RoomResource::class),
+            'Berhasil memanggil list ruangan',
+            200
+        );
     }
 
     /**
