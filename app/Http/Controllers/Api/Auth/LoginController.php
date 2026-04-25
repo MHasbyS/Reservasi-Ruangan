@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Http\Resources\User\UserResource;
+use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Resources\Auth\LoginResource;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 
@@ -18,24 +19,19 @@ class LoginController extends Controller
         $user = User::where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+            return ApiResponse::error(
+                'Invalid Credentials',
+                Response::HTTP_UNAUTHORIZED
+            );
         }
-        $token = $user->createToken('API token')->accessToken;
+        $token = $user->createToken('auth_token')->accessToken;
 
-        // activity('auth')
-        //     ->causedBy($user)
-        //     ->withProperties([
-        //         'ip' => request()->ip(),
-        //         'user_agent' => request()->userAgent(),
-        //     ])
-        //     ->log('User login ke sistem');
-
-        return response()->json([
-            'Message' => 'Login Berhasil',
-            'data' => new LoginResource($user),
-            'token' => $token
-        ]);
+        return ApiResponse::success(
+           [
+                'token' => $token,
+                'user' => new UserResource($user),
+            ],
+            'Login Successfull'
+        );
     }
 }

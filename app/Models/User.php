@@ -70,4 +70,13 @@ class User extends Authenticatable
                 return "Room has been {$eventName}";
             });
     }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->when($search, function ($query, $search) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('role', 'like', "%{$search}%");
+        });
+    }
 }
