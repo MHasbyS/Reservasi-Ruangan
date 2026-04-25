@@ -31,7 +31,6 @@ class RoomController extends Controller
         return ApiResponse::success(
             new PaginatedResource($rooms, RoomResource::class),
             'Berhasil memanggil list ruangan',
-            200
         );
     }
 
@@ -41,25 +40,19 @@ class RoomController extends Controller
     public function store(StoreRoomRequest $request)
     {
         try {
-            $validated = $request->validated();
-            $room = Rooms::create([
-                'name' => $validated['name'],
-                'capacity' => $validated['capacity'],
-                'description' => $validated['description'] ?? null,
-                'status' => 'inactive',
-            ]);
+            $room = $this->roomService->storeRoom($request->validated());
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Room Created Successfully',
-                'data' => new RoomResource($room),
-            ], 201);
+            return ApiResponse::success(
+                new RoomResource($room),
+                'Berhasil menambahkan ruangan',
+                Response::HTTP_CREATED
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Room Creation Failed: ',
-                'error' => $e->getMessage(),
-            ], 500);
+            return ApiResponse::error(
+                'Terjadi kesalahan pada server saat proses menambahkan ruangan',
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                $e->getMessage()
+            );
         }
     }
 
@@ -69,25 +62,18 @@ class RoomController extends Controller
     public function show(string $id)
     {
         try {
-            $room = Rooms::find($id);
+            $room = $this->roomService->showRoomById($id);
 
-            if (!$room) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Room not found'
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => new RoomResource($room),
-            ], 200);
+            return ApiResponse::success(
+                new RoomResource($room),
+                'Berhasil memanggil detail ruangan',
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve room: ',
-                'error' => $e->getMessage(),
-            ], 500);
+            return ApiResponse::error(
+                'Terjadi kesalahan pada server saat proses memanggil detail ruangan',
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                $e->getMessage()
+            );
         }
     }
 
@@ -97,86 +83,39 @@ class RoomController extends Controller
     public function update(UpdateRoomRequest $request, string $id)
     {
         try {
-            $room = Rooms::find($id);
+            $room = $this->roomService->updateRoom($id, $request->validated());
 
-            if (!$room) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Room not found'
-                ], 404);
-            }
-
-            if ($room->status === 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ruangan tidak dapat diubah karena masih dalam status aktif'
-                ], 400);
-            }
-
-            $room->update($request->validated());
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Room updated successfully',
-                'data' => new RoomResource($room),
-            ], 200);
+            return ApiResponse::success(
+                new RoomResource($room),
+                'Berhasil mengubah ruangan',
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Room Update Failed: ',
-                'error' => $e->getMessage(),
-            ]);
+            return ApiResponse::error(
+                'Terjadi kesalahan pada server saat proses mengubah ruangan',
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                $e->getMessage()
+            );
         }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Rooms $room, $id)
+    public function destroy(string $id)
     {
         try {
-            $room = Rooms::find($id);
+            $this->roomService->deleteRoom($id);
 
-            // if ($room->status === 'active') {
-            //     return response()->json([
-            //         'message' => 'Ruangan tidak bisa di hapus karena masih aktif.'
-            //     ], 400);
-            // }
-
-            if ($room->reservations()->where('status', 'active')->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ruangan tidak bisa dihapus karena masih ada reservasi aktif.'
-                ], 400);
-            }
-
-            if ($room->fixedSchedules()->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ruangan tidak bisa di hapus karena masih ada jadwal rutin.'
-                ], 400);
-            }
-
-            if (!$room) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Room not found'
-                ], 404);
-            }
-
-
-            $room->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Room deleted successfully'
-            ]);
+            return ApiResponse::success(
+                null,
+                'Berhasil menghapus ruangan',
+            );
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus ruangan',
-                'error' => $e->getMessage()
-            ], 500);
+            return ApiResponse::error(
+                'Terjadi kesalahan pada server saat proses menghapus ruangan',
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                $e->getMessage()
+            );
         }
     }
     public function getActiveRooms()
