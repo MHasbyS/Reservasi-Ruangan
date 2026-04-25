@@ -44,6 +44,15 @@ class UserController extends Controller
         // }
     }
 
+    public function options(GetUserRequest $request){
+        $users = User::select('id','name')->search($request->search)->orderBy('name')->get();
+
+        return ApiResponse::success(
+            UserResource::collection($users),
+            'User List'
+        );
+    }
+
     /**
      * Store a newly created resource in storage.
      */

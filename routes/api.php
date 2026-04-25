@@ -47,10 +47,8 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('role:admin')->group(function () {
     });
     Route::middleware('role_or_permission:admin|manage.users')->group(function () {
-        Route::post('users', [UserController::class, 'store']);
-        Route::get('users/{id}', [UserController::class, 'show']);
-        Route::put('users/{id}', [UserController::class, 'update']);
-        Route::delete('users/{id}', [UserController::class, 'destroy']);
+        Route::get('users/options', [UserController::class, 'options']);
+        Route::apiResource('users', UserController::class);
     });
 
     Route::middleware('role_or_permission:admin|manage rooms')->group(function () {
