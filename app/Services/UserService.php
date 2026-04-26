@@ -3,37 +3,108 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserService
 {
-    public function filterUser(array $filters)
+    public function storeUser(array $data)
     {
-        $query = User::query();
+        DB::beginTransaction();
+        try {
+            $data['password'] = bcrypt($data['password']);
 
-        if (!empty($filters['name'])) {
-            $query->where('name', 'like', '%' . $filters['name'] . '%');
+            $user = User::create($data);
+
+            if (isset($data['role'])) {
+                $user->assignRole($data['role']);
+            }
+
+            DB::commit();
+            return $user;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error("Service Error [storeUser]: " . $e->getMessage());
+
+            throw $e;
         }
+    }
 
-        if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
+    public function showUserById(string $id)
+    {
+        try {
+            $user = User::find($id);
+
+            if (!$user) {
+                throw new \Exception('User tidak ditemukan', 404);
+            }
+
+            return $user;
+        } catch (\Exception $e) {
+            Log::error("Service Error [showUserById]: " . $e->getMessage());
+
+            throw $e;
         }
+    }
 
-        $sortBy = $filters['sort_by'] ?? 'created_at';
-        $sortOrder = strtolower($filters['sort_order'] ?? 'asc');
-        $allowedSorts = ['created_at', 'name', 'role'];
+    public function updateUser(string $id, array $data)
+    {
+        DB::beginTransaction();
+        try {
+            $user = User::find($id);
 
-        if (!in_array($sortBy, $allowedSorts)) {
-            $sortBy = 'created_at';
+            if (!$user) {
+                throw new \Exception('User tidak ditemukan', 404);
+            }
+
+            if (!empty($data['password'])) {
+                $data['password'] = bcrypt($data['password']);
+            } else {
+                unset($data['password']);
+            }
+
+            $user->update($data);
+
+            if (isset($data['role'])) {
+                $user->assignRole($data['role']);
+            }
+
+            DB::commit();
+            return $user;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error("Service Error [updateUser]: " . $e->getMessage());
+
+            throw $e;
         }
+    }
 
-        $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+    public function deleteUser(string $id)
+    {
+        DB::beginTransaction();
+        try {
+            $user = User::find($id);
 
-        $perPage = $filters['per_page'] ?? 10;
+            if (!$user) {
+                throw new \Exception('User tidak ditemukan', 404);
+            }
 
-        if ($perPage === 'all') {
-            return $query->get();
+            if ($user->reservations()->whereIn('status', ['active', 'in_use'])->exists()) {
+                throw new \Exception('User tidak bisa dihapus karena masih memiliki reservasi aktif atau sedang menggunakan ruangan', 400);
+            }
+
+            $user->delete();
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error("Service Error [deleteUser]: " . $e->getMessage());
+
+            throw $e;
         }
-
-        return $query->paginate((int)$perPage);
     }
 }
