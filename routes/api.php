@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\FixedScheduleController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\KaryawanController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -71,7 +72,9 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::middleware('role_or_permission:karyawan|request reservation')->group(function () {
-        Route::post('reservations', [ReservationController::class, 'store']);
+        Route::get('karyawan/dashboard', [KaryawanController::class, 'index'])->name('karyawan.dashboard');
+        Route::get('karyawan/riwayat', [KaryawanController::class, 'riwayat']);
+        Route::post('karyawan/reservations', [KaryawanController::class, 'store']);
     });
 
     Route::middleware('role_or_permission:karyawan|view reservation')->group(function () {});

@@ -26,7 +26,7 @@ class ReservationResource extends JsonResource
                 'id' => $this->room->id,
                 'name' => $this->room->name,
             ],
-            'date' => $this->date,
+            'date' => $this->date->format('Y-m-d'),
             'day_of_week' => $this->day_of_week,
             'start_time' => Carbon::parse($this->start_time)->format('H:i:s'),
             'end_time' => Carbon::parse($this->end_time)->format('H:i:s'),
