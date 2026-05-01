@@ -39,14 +39,14 @@ Route::middleware('auth:api')->group(function () {
 
     // General Access (Shared between roles)
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    
+
     // Read-only access for resources
     Route::get('/rooms', [RoomController::class, 'index']);
     Route::get('/rooms/{id}', [RoomController::class, 'show']);
-    
+
     Route::get('/fixed-schedules', [FixedScheduleController::class, 'index']);
     Route::get('/fixed-schedules/{id}', [FixedScheduleController::class, 'show']);
-    
+
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
 
@@ -101,6 +101,6 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::middleware('role_or_permission:karyawan|cancel own reservation')->group(function () {
-        Route::patch('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
+        Route::patch('/reservations/{id}/cancel', [KaryawanController::class, 'cancel']);
     });
 });

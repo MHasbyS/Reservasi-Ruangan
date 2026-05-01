@@ -156,4 +156,37 @@ class KaryawanController extends Controller
             return ApiResponse::error('Gagal membuat reservasi', 500);
         }
     }
+    public function cancel(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $reservation = Reservations::findOrFail($id);
+
+        if (!in_array($reservation->status, ['pending', 'approved'])) {
+            return response()->json([
+                'message' => 'Reservasi tidak bisa dibatalkan.',
+            ], 422);
+        }
+
+        $reservation->update([
+            'status' => 'canceled',
+            'reason' => $request->reason,
+        ]);
+
+        activity('reservation')
+            ->causedBy(Auth::user())
+            ->performedOn($reservation)
+            ->event('canceled')
+            ->log('Reservasi dibatalkan oleh pengguna.');
+
+        // Mail::to('admin@example.com')->send(new ReservationNotificationMail($reservation, 'canceled'));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reservasi berhasil dibatalkan.',
+            'data' => new ReservationApprovalResource($reservation),
+        ], 200);
+    }
 }
