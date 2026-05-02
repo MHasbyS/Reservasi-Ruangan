@@ -10,7 +10,7 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
-// use Illuminate\Http\Response;
+use Illuminate\Http\Response;
 use App\Services\UserService;
 
 class UserController extends Controller

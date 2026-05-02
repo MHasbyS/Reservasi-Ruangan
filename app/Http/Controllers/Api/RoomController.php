@@ -12,6 +12,7 @@ use App\Http\Resources\PaginatedResource;
 use App\Http\Resources\RoomResource;
 use App\Models\Rooms;
 use App\Services\RoomService;
+use Illuminate\Http\Response;
 
 class RoomController extends Controller
 {
